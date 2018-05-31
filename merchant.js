@@ -16,14 +16,14 @@ var KEYS_FILENAME = appDataDir + '/' + conf.KEYS_FILENAME;
 var wallet;
 
 var arrToppings = {
-	hawaiian: {name: 'Hawaiian'},
-	pepperoni: {name: 'Pepperoni'},
-	mexican: {name: 'Mexican'}
+	hawaiian: {name: '夏威夷'},
+	pepperoni: {name: '意大利辣香肠'},
+	mexican: {name: '墨西哥'}
 };
 
 var arrYesNoAnswers = {
-	yes: 'Yes',
-	no: 'No'
+	yes: '是',
+	no: '否'
 }
 
 function getToppingsList(){
@@ -136,10 +136,10 @@ function createWallet(onDone){
 function handleNoWallet(from_address){
 	if (from_address === conf.homeDeviceAddress && wallet === null)
 		createWallet(function(){
-			device.sendMessageToDevice(from_address, 'text', "Wallet created, all new addresses will be synced to your device");
+			device.sendMessageToDevice(from_address, 'text', "钱包已创建, 所有新地址将会同步到你的设备");
 		});
 	else
-		device.sendMessageToDevice(from_address, 'text', "The shop is not set up yet, try again later");
+		device.sendMessageToDevice(from_address, 'text', "店铺还没配置, 请稍后重试");
 }
 
 
@@ -187,7 +187,7 @@ eventBus.on('paired', function(from_address){
 	if (!wallet)
 		return handleNoWallet(from_address);
 	createNewSession(from_address, function(){
-		device.sendMessageToDevice(from_address, 'text', "Hi! Choose your pizza:\n"+getToppingsList()+"\nAll pizzas are at 10,000 bytes.");
+		device.sendMessageToDevice(from_address, 'text', "请选择你的披萨:\n"+getToppingsList()+"\n所有的披萨价格都为 10,000 bytes.");
 	});
 });
 
@@ -199,27 +199,27 @@ eventBus.on('text', function(from_address, text){
 		switch(state.step){
 			case 'waiting_for_choice_of_pizza':
 				if (!arrToppings[text])
-					return device.sendMessageToDevice(from_address, 'text', "Please choose one of the toppings available:\n"+getToppingsList());
+					return device.sendMessageToDevice(from_address, 'text', "请选择一种可用的口味:\n"+getToppingsList());
 				state.order.pizza = text;
 				state.step = 'waiting_for_choice_of_cola';
 				updateState(state);
-				device.sendMessageToDevice(from_address, 'text', arrToppings[text].name+" at 10,000 bytes.  Add a cola (1,000 bytes)?\n"+getYesNoList());
+				device.sendMessageToDevice(from_address, 'text', arrToppings[text].name+" at 10,000 bytes.  加个可乐 (1,000 bytes)?\n"+getYesNoList());
 				break;
 
 			case 'waiting_for_choice_of_cola':
 				if (!arrYesNoAnswers[text])
-					return device.sendMessageToDevice(from_address, 'text', "Add a cola (1,000 bytes)?  Please click Yes or No above.");
+					return device.sendMessageToDevice(from_address, 'text', "加个可乐 (1,000 bytes)?  请点击 是 或 否");
 				walletDefinedByKeys.issueNextAddress(wallet, 0, function(objAddress){
 					state.address = objAddress.address;
 					state.order.cola = text;
 					state.step = 'waiting_for_payment';
 					state.amount = 10000;
-					var response = 'Your order: '+arrToppings[state.order.pizza].name;
+					var response = '你的订单: '+arrToppings[state.order.pizza].name;
 					if (state.order.cola === 'yes'){
 						state.amount += 1000;
-						response += ' and Cola';
+						response += ' 和可乐';
 					}
-					response += ".\nOrder total is "+state.amount+" bytes.  Please pay.\n["+state.amount+" bytes](byteball:"+state.address+"?amount="+state.amount+")";
+					response += ".\n订单总计 "+state.amount+" bytes.  请支付.\n["+state.amount+" bytes](byteball:"+state.address+"?amount="+state.amount+")";
 					updateState(state);
 					device.sendMessageToDevice(from_address, 'text', response);
 				});
@@ -227,24 +227,24 @@ eventBus.on('text', function(from_address, text){
 
 			case 'waiting_for_payment':
 				if (text !== 'cancel')
-					return device.sendMessageToDevice(from_address, 'text', "Waiting for your payment.  If you want to cancel the order and start over, click [Cancel](command:cancel).");
+					return device.sendMessageToDevice(from_address, 'text', "等待你支付。 如果你想取消并重新开始, 请点击 [取消](command:cancel).");
 				cancelState(state);
 				createNewSession(from_address, function(){
-					device.sendMessageToDevice(from_address, 'text', "Order canceled.\nChoose your pizza:\n"+getToppingsList()+"\nAll pizzas are at 10,000 bytes.");
+					device.sendMessageToDevice(from_address, 'text', "订单取消。\n选择你的披萨:\n"+getToppingsList()+"\n所有的披萨价格都为 10,000 bytes.");
 				});
 				break;
 				
 			case 'unconfirmed_payment':
-				device.sendMessageToDevice(from_address, 'text', "We are waiting for confirmation of your payment.  Be patient.");
+				device.sendMessageToDevice(from_address, 'text', "我们正在确认你的支付。请耐心等待.");
 				break;
 
 			case 'done':
 			case 'doublespend':
 				createNewSession(from_address, function(){
 					var response = (state.step === 'done')
-						? "The order was paid and your pizza sent to you.\nIf you want to order another pizza,"
-						: "Your payment appeared to be double-spend and was rejected.\nIf you want to make a new order,";
-					response += " choose the topping:\n"+getToppingsList()+"\nAll pizzas are at 10,000 bytes.";
+						? "订单已经付了，披萨归你了。\n如果你想购买其他的披萨的话，"
+						: "你的重复付款已被拒绝了。\n如果你想下一个新订单的话，";
+					response += " 选择口味:\n"+getToppingsList()+"\n所有的披萨价格都为 10,000 bytes.";
 					device.sendMessageToDevice(from_address, 'text', response);
 				});
 				break;
@@ -264,9 +264,9 @@ eventBus.on('new_my_transactions', function(arrUnits){
 		function(rows){
 			rows.forEach(function(row){
 				if (row.expected_amount !== row.paid_amount)
-					return device.sendMessageToDevice(row.device_address, 'text', "Received incorect amount from you: expected "+row.expected_amount+" bytes, received "+row.paid_amount+" bytes.  The payment is ignored.");
+					return device.sendMessageToDevice(row.device_address, 'text', "收到你的支付: 应收 "+row.expected_amount+" bytes, 收到 "+row.paid_amount+" bytes.  付款将被忽略。");
 				db.query("UPDATE states SET pay_date="+db.getNow()+", unit=?, step='unconfirmed_payment' WHERE state_id=?", [row.unit, row.state_id]);
-				device.sendMessageToDevice(row.device_address, 'text', "Received your payment, please wait a few minutes while it is still unconfirmed.");
+				device.sendMessageToDevice(row.device_address, 'text', "收到你的付款, 请耐心等待被确认。");
 			});
 		}
 	);
@@ -284,8 +284,8 @@ eventBus.on('my_transactions_became_stable', function(arrUnits){
 				device.sendMessageToDevice(
 					row.device_address, 'text', 
 					(step === 'done') 
-						? "Payment confirmed.  Your order is on its way to you!" 
-						: "Your payment appeared to be double-spend.  The order will not be fulfilled"
+						? "确认付款。你点的菜马上就到!" 
+						: "你正在重复支付。被拒绝"
 				);
 				// todo: actually deliver the pizza
 			});
